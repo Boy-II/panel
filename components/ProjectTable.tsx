@@ -38,6 +38,12 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
     return projects.filter(project => {
       // 排除已結案和已完成的專案（使用 state 欄位）
       const state = (project as any).state || '進行中';
+
+      // 調試：打印前 3 個專案的 state 值
+      if (projects.indexOf(project) < 3) {
+        console.log('專案:', project.專案名稱, 'State:', state, 'Type:', typeof state);
+      }
+
       if (state === '已結案' || state === '已完成') {
         return false;
       }
