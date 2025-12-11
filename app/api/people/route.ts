@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getProjects } from '@/lib/notion';
+import { getAllProjects } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   try {
-    const projects = await getProjects();
+    const projects = await getAllProjects();
 
     // 收集所有設計師和編輯，記錄每個人的角色
     const peopleMap = new Map<string, Set<string>>();

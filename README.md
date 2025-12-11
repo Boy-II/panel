@@ -50,8 +50,22 @@
 - **UI 樣式**：Tailwind CSS
 - **圖表庫**：Recharts
 - **圖標**：Lucide React
-- **API 整合**：Notion API (@notionhq/client)
+- **資料來源**：Notion API (@notionhq/client)
+- **資料庫**：PostgreSQL (pg)
 - **語言**：TypeScript
+
+## 架構說明
+
+### 資料流程
+
+```
+Notion Database → Sync API → PostgreSQL → Read APIs → Frontend
+```
+
+1. **Notion 作為資料來源**：所有專案資料存儲在 Notion 資料庫中
+2. **PostgreSQL 作為快取層**：提供快速查詢，減少 Notion API 調用
+3. **同步機制**：通過 API 端點手動或定時同步 Notion 資料到 PostgreSQL
+4. **讀取優化**：所有前端查詢直接從 PostgreSQL 讀取，大幅提升載入速度
 
 ## 快速開始
 
@@ -82,11 +96,17 @@ npm install
 cp .env.example .env.local
 ```
 
-編輯 `.env.local`，填入您的 Notion 資訊：
+編輯 `.env.local`，填入您的 Notion 和 PostgreSQL 資訊：
 
 ```env
+# Notion API Configuration
 NOTION_API_KEY=your_notion_integration_token_here
 NOTION_DATABASE_ID=your_database_id_here
+
+# PostgreSQL Database Configuration
+DATABASE_URL=postgresql://username:password@host:port/database
+
+# Optional: Refresh interval in milliseconds
 REFRESH_INTERVAL=60000
 ```
 
@@ -114,7 +134,35 @@ https://www.notion.so/workspace/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?v=...
 3. 找到 URL 中間的 32 位字符串（由字母和數字組成）
 4. 複製並貼到 `.env.local` 的 `NOTION_DATABASE_ID` 中
 
-### 5. 啟動開發服務器
+#### 如何設定 PostgreSQL：
+
+1. 在 Zeabur 創建 PostgreSQL 服務
+2. 獲取連接字串（Connection String）
+3. 複製並貼到 `.env.local` 的 `DATABASE_URL` 中
+
+### 5. 初始化數據庫
+
+首次使用需要初始化數據庫表結構：
+
+```bash
+npm run db:init
+```
+
+### 6. 同步 Notion 資料
+
+初始化數據庫後，需要從 Notion 同步資料：
+
+```bash
+# 方法一：啟動服務器後調用 API
+npm run dev
+# 在另一個終端執行：
+curl -X POST http://localhost:3000/api/sync
+
+# 方法二：部署到 Zeabur 後，訪問同步 API
+# POST https://your-app.zeabur.app/api/sync
+```
+
+### 7. 啟動開發服務器
 
 ```bash
 npm run dev
@@ -122,7 +170,7 @@ npm run dev
 
 打開瀏覽器訪問 [http://localhost:3000](http://localhost:3000)
 
-### 6. 構建生產版本
+### 8. 構建生產版本
 
 ```bash
 npm run build
@@ -150,15 +198,30 @@ git push -u origin main
    - 選擇 "Deploy from GitHub"
    - 選擇您的倉庫
 
-4. 設定環境變數：
+4. 添加 PostgreSQL 服務：
+   - 在 Zeabur 專案中點擊 "Add Service"
+   - 選擇 "PostgreSQL"
+   - 等待 PostgreSQL 服務啟動
+
+5. 設定環境變數：
    - 在 Zeabur 專案設定中，添加環境變數：
      - `NOTION_API_KEY`
      - `NOTION_DATABASE_ID`
+     - `DATABASE_URL`（從 PostgreSQL 服務獲取）
      - `REFRESH_INTERVAL`（可選）
 
-5. 部署：
+6. 部署：
    - Zeabur 會自動檢測為 Next.js 專案並部署
    - 等待部署完成，即可獲得訪問網址
+
+7. 初始化資料庫與同步：
+   ```bash
+   # 初始化資料庫表結構（使用 DATABASE_URL）
+   npm run db:init
+
+   # 同步 Notion 資料到 PostgreSQL
+   curl -X POST https://your-app.zeabur.app/api/sync
+   ```
 
 ### 方法二：使用 Zeabur CLI
 
@@ -179,22 +242,32 @@ zeabur deploy
 panel/
 ├── app/
 │   ├── api/
-│   │   ├── projects/      # 專案資料 API
-│   │   └── stats/         # 統計資料 API
-│   ├── globals.css        # 全局樣式
-│   ├── layout.tsx         # 根佈局
-│   └── page.tsx           # 主頁面
+│   │   ├── projects/           # 專案資料 API
+│   │   ├── stats/              # 統計資料 API
+│   │   ├── people/             # 人員列表 API
+│   │   ├── personal/[person]/  # 個人儀表板 API
+│   │   └── sync/               # Notion → PostgreSQL 同步 API
+│   ├── personal/[person]/      # 個人儀表板頁面
+│   ├── globals.css             # 全局樣式
+│   ├── layout.tsx              # 根佈局
+│   └── page.tsx                # 全局儀表板頁面
 ├── components/
-│   ├── Charts.tsx         # 圖表組件
-│   ├── ProjectTable.tsx   # 專案表格組件
-│   └── StatsCard.tsx      # 統計卡片組件
+│   ├── Charts.tsx              # 圖表組件
+│   ├── ProjectTable.tsx        # 專案表格組件
+│   └── StatsCard.tsx           # 統計卡片組件
 ├── lib/
-│   └── notion.ts          # Notion API 整合
-├── .env.example           # 環境變數範例
-├── next.config.js         # Next.js 配置
-├── package.json           # 依賴管理
-├── tailwind.config.ts     # Tailwind 配置
-└── tsconfig.json          # TypeScript 配置
+│   ├── notion.ts               # Notion API 整合
+│   ├── db.ts                   # PostgreSQL 資料庫操作
+│   └── cache.ts                # 快取工具
+├── database/
+│   └── schema.sql              # PostgreSQL 資料庫結構
+├── scripts/
+│   └── init-db.ts              # 資料庫初始化腳本
+├── .env.example                # 環境變數範例
+├── next.config.js              # Next.js 配置
+├── package.json                # 依賴管理
+├── tailwind.config.ts          # Tailwind 配置
+└── tsconfig.json               # TypeScript 配置
 ```
 
 ## API 路由
@@ -253,6 +326,25 @@ panel/
 }
 ```
 
+### POST /api/sync
+
+從 Notion 同步資料到 PostgreSQL。
+
+**請求：**
+```bash
+curl -X POST https://your-app.zeabur.app/api/sync
+```
+
+**響應範例：**
+```json
+{
+  "success": true,
+  "message": "同步成功",
+  "totalProjects": 156,
+  "durationMs": 3421
+}
+```
+
 ## 自定義配置
 
 ### 修改刷新間隔
@@ -285,9 +377,21 @@ if (diffDays < 0) {
 
 ## 注意事項
 
-1. **Notion API 限制**：Notion API 有請求速率限制，建議不要設定過短的刷新間隔
-2. **權限設定**：確保 Notion Integration 有讀取資料庫的權限
-3. **資料庫結構**：如果您的 Notion 資料庫結構與 BWC 專案列表不同，需要修改 `lib/notion.ts` 中的屬性映射
+1. **資料同步**：
+   - 初次部署後需要手動調用 `/api/sync` 來同步 Notion 資料
+   - 建議設定定期同步（例如使用 cron job 或 Zeabur 的 scheduled tasks）
+   - 可以在 Notion 資料更新後手動觸發同步
+
+2. **Notion API 限制**：
+   - Notion API 有請求速率限制
+   - 使用 PostgreSQL 快取後，只有同步操作會調用 Notion API
+   - 所有讀取操作都從 PostgreSQL 讀取，不受 Notion API 限制
+
+3. **權限設定**：確保 Notion Integration 有讀取資料庫的權限
+
+4. **資料庫結構**：如果您的 Notion 資料庫結構與 BWC 專案列表不同，需要修改 `lib/notion.ts` 中的屬性映射
+
+5. **PostgreSQL 連接**：確保 `DATABASE_URL` 設定正確，並且 PostgreSQL 服務正常運行
 
 ## 故障排除
 
@@ -306,6 +410,19 @@ if (diffDays < 0) {
 
 - 確認在 Zeabur 或其他平台設定了環境變數
 - 重新部署應用
+
+### 4. PostgreSQL 連接失敗
+
+- 檢查 `DATABASE_URL` 是否正確
+- 確認 PostgreSQL 服務正常運行
+- 檢查 SSL 設定（目前設定為 `ssl: false`）
+- 確認網路連接正常
+
+### 5. 資料不顯示
+
+- 檢查是否已執行資料庫初始化 `npm run db:init`
+- 檢查是否已同步 Notion 資料 `POST /api/sync`
+- 查看瀏覽器控制台和伺服器日誌
 
 ## 授權
 

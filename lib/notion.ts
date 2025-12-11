@@ -1,4 +1,5 @@
 import { Client } from '@notionhq/client';
+import { cache } from './cache';
 
 // 延遲初始化，避免構建時出錯
 let notionClient: Client | null = null;

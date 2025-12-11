@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getProjects } from '@/lib/notion';
+import { getAllProjects } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -11,7 +11,7 @@ export async function GET(
   const params = await context.params;
   try {
     const personName = decodeURIComponent(params.person);
-    const projects = await getProjects();
+    const projects = await getAllProjects();
     const now = new Date();
 
     // 過濾該人員相關的專案
