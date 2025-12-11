@@ -36,6 +36,12 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
   // 過濾專案
   const filteredProjects = useMemo(() => {
     return projects.filter(project => {
+      // 排除已結案和已完成的專案（使用 state 欄位）
+      const state = (project as any).state || '進行中';
+      if (state === '已結案' || state === '已完成') {
+        return false;
+      }
+
       const matchSearch =
         project.專案名稱.toLowerCase().includes(searchTerm.toLowerCase()) ||
         project.責任編輯.some(e => e.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -111,7 +117,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
             <input
               type="text"
               placeholder="搜尋專案、編輯、設計..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -119,7 +125,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
 
           {/* 通知狀態篩選 */}
           <select
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -131,7 +137,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
 
           {/* 專案型態篩選 */}
           <select
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
           >
@@ -143,7 +149,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
 
           {/* 時間狀態篩選 */}
           <select
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
           >

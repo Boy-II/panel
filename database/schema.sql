@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS projects (
     editors TEXT[], -- 責任編輯（陣列）
     designers TEXT[], -- 責任設計（陣列）
     notification_status VARCHAR(50), -- 通知狀態
+    state VARCHAR(50), -- 專案狀態（進行中、已結案、已完成等）
     work_period_start TIMESTAMP, -- 工作執行區間開始
     work_period_end TIMESTAMP, -- 工作執行區間結束
     additional_notes TEXT, -- 補充說明
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 -- 2. 創建索引以提升查詢速度
 CREATE INDEX IF NOT EXISTS idx_projects_notification_status ON projects(notification_status);
+CREATE INDEX IF NOT EXISTS idx_projects_state ON projects(state);
 CREATE INDEX IF NOT EXISTS idx_projects_work_period_end ON projects(work_period_end);
 CREATE INDEX IF NOT EXISTS idx_projects_synced_at ON projects(synced_at);
 CREATE INDEX IF NOT EXISTS idx_projects_designers ON projects USING GIN(designers);

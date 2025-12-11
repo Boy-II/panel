@@ -23,6 +23,7 @@ export interface ProjectProperty {
   責任編輯: string[];
   責任設計: string[];
   通知狀態: string;
+  state: string;
   工作執行區間: { start: string | null; end: string | null } | null;
   補充說明: string;
   單元名稱: string;
@@ -66,6 +67,7 @@ export function parseNotionPage(page: any): ProjectProperty {
     責任編輯: props['責任編輯']?.multi_select ? extractMultiSelect(props['責任編輯'].multi_select) : [],
     責任設計: props['責任設計']?.multi_select ? extractMultiSelect(props['責任設計'].multi_select) : [],
     通知狀態: props['通知狀態']?.status ? extractStatus(props['通知狀態'].status) : '未知',
+    state: props['state']?.status ? extractStatus(props['state'].status) : '進行中',
     工作執行區間: props['工作執行區間']?.date ? extractDate(props['工作執行區間'].date) : null,
     補充說明: props['補充說明']?.rich_text ? extractRichText(props['補充說明'].rich_text) : '',
     單元名稱: props['單元名稱']?.rich_text ? extractRichText(props['單元名稱'].rich_text) : '',

@@ -30,6 +30,7 @@ export function projectToDbRow(project: ProjectProperty) {
     editors: project.責任編輯,
     designers: project.責任設計,
     notification_status: project.通知狀態,
+    state: project.state,
     work_period_start: project.工作執行區間?.start || null,
     work_period_end: project.工作執行區間?.end || null,
     additional_notes: project.補充說明,
@@ -50,6 +51,7 @@ export function dbRowToProject(row: any): ProjectProperty {
     責任編輯: row.editors || [],
     責任設計: row.designers || [],
     通知狀態: row.notification_status,
+    state: row.state || '進行中',
     工作執行區間: row.work_period_start || row.work_period_end ? {
       start: row.work_period_start,
       end: row.work_period_end,
@@ -85,11 +87,11 @@ export async function upsertProject(project: ProjectProperty): Promise<void> {
   await pool.query(`
     INSERT INTO projects (
       id, project_name, project_types, editors, designers,
-      notification_status, work_period_start, work_period_end,
+      notification_status, state, work_period_start, work_period_end,
       additional_notes, unit_name, size_specification,
       production_time, file_path, last_updated_at, synced_at
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP
     )
     ON CONFLICT (id) DO UPDATE SET
       project_name = EXCLUDED.project_name,
@@ -97,6 +99,7 @@ export async function upsertProject(project: ProjectProperty): Promise<void> {
       editors = EXCLUDED.editors,
       designers = EXCLUDED.designers,
       notification_status = EXCLUDED.notification_status,
+      state = EXCLUDED.state,
       work_period_start = EXCLUDED.work_period_start,
       work_period_end = EXCLUDED.work_period_end,
       additional_notes = EXCLUDED.additional_notes,
@@ -108,7 +111,7 @@ export async function upsertProject(project: ProjectProperty): Promise<void> {
       synced_at = CURRENT_TIMESTAMP
   `, [
     row.id, row.project_name, row.project_types, row.editors, row.designers,
-    row.notification_status, row.work_period_start, row.work_period_end,
+    row.notification_status, row.state, row.work_period_start, row.work_period_end,
     row.additional_notes, row.unit_name, row.size_specification,
     row.production_time, row.file_path, row.last_updated_at
   ]);
@@ -127,11 +130,11 @@ export async function bulkUpsertProjects(projects: ProjectProperty[]): Promise<v
       await client.query(`
         INSERT INTO projects (
           id, project_name, project_types, editors, designers,
-          notification_status, work_period_start, work_period_end,
+          notification_status, state, work_period_start, work_period_end,
           additional_notes, unit_name, size_specification,
           production_time, file_path, last_updated_at, synced_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP
         )
         ON CONFLICT (id) DO UPDATE SET
           project_name = EXCLUDED.project_name,
@@ -139,6 +142,7 @@ export async function bulkUpsertProjects(projects: ProjectProperty[]): Promise<v
           editors = EXCLUDED.editors,
           designers = EXCLUDED.designers,
           notification_status = EXCLUDED.notification_status,
+          state = EXCLUDED.state,
           work_period_start = EXCLUDED.work_period_start,
           work_period_end = EXCLUDED.work_period_end,
           additional_notes = EXCLUDED.additional_notes,
@@ -150,7 +154,7 @@ export async function bulkUpsertProjects(projects: ProjectProperty[]): Promise<v
           synced_at = CURRENT_TIMESTAMP
       `, [
         row.id, row.project_name, row.project_types, row.editors, row.designers,
-        row.notification_status, row.work_period_start, row.work_period_end,
+        row.notification_status, row.state, row.work_period_start, row.work_period_end,
         row.additional_notes, row.unit_name, row.size_specification,
         row.production_time, row.file_path, row.last_updated_at
       ]);
