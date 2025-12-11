@@ -2,11 +2,7 @@ import { Pool } from 'pg';
 
 async function addStateColumn() {
   const pool = new Pool({
-    user: 'root',
-    password: 'Yc7zX0v86l43j2SZ5h9w1kEaOGpgQAIi',
-    host: 'hnd1.clusters.zeabur.com',
-    port: 30116,
-    database: 'zeabur',
+    connectionString: process.env.DATABASE_URL,
     ssl: false,
   });
 
