@@ -1,10 +1,20 @@
 import { Client } from '@notionhq/client';
 
-export const notion = new Client({
-  auth: process.env.NOTION_API_KEY,
-});
+// 延遲初始化，避免構建時出錯
+let notionClient: Client | null = null;
 
-export const DATABASE_ID = process.env.NOTION_DATABASE_ID || '';
+export function getNotionClient(): Client {
+  if (!notionClient) {
+    notionClient = new Client({
+      auth: process.env.NOTION_API_KEY || '',
+    });
+  }
+  return notionClient;
+}
+
+export function getDatabaseId(): string {
+  return process.env.NOTION_DATABASE_ID || '';
+}
 
 export interface ProjectProperty {
   專案名稱: string;
@@ -67,6 +77,9 @@ export function parseNotionPage(page: any): ProjectProperty {
 
 export async function getProjects(): Promise<ProjectProperty[]> {
   try {
+    const notion = getNotionClient();
+    const databaseId = getDatabaseId();
+
     let allResults: any[] = [];
     let hasMore = true;
     let startCursor: string | undefined = undefined;
@@ -74,7 +87,7 @@ export async function getProjects(): Promise<ProjectProperty[]> {
     // 使用分頁獲取所有資料
     while (hasMore) {
       const response: any = await notion.databases.query({
-        database_id: DATABASE_ID,
+        database_id: databaseId,
         page_size: 100,
         start_cursor: startCursor,
       });
@@ -94,6 +107,9 @@ export async function getProjects(): Promise<ProjectProperty[]> {
 
 export async function queryProjects(filter?: any, sorts?: any): Promise<ProjectProperty[]> {
   try {
+    const notion = getNotionClient();
+    const databaseId = getDatabaseId();
+
     let allResults: any[] = [];
     let hasMore = true;
     let startCursor: string | undefined = undefined;
@@ -101,7 +117,7 @@ export async function queryProjects(filter?: any, sorts?: any): Promise<ProjectP
     // 使用分頁獲取所有資料
     while (hasMore) {
       const response: any = await notion.databases.query({
-        database_id: DATABASE_ID,
+        database_id: databaseId,
         filter,
         sorts,
         page_size: 100,

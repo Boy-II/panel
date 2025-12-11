@@ -6,8 +6,9 @@ export const revalidate = 0;
 
 export async function GET(
   request: Request,
-  { params }: { params: { person: string } }
+  context: { params: Promise<{ person: string }> }
 ) {
+  const params = await context.params;
   try {
     const personName = decodeURIComponent(params.person);
     const projects = await getProjects();
