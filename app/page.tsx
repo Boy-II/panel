@@ -28,11 +28,10 @@ export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const fetchData = async () => {
     try {
-      setRefreshing(true);
       const [projectsRes, statsRes] = await Promise.all([
         fetch('/api/projects'),
         fetch('/api/stats'),
@@ -48,7 +47,27 @@ export default function Home() {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
+    }
+  };
+
+  const syncData = async () => {
+    try {
+      setSyncing(true);
+      const response = await fetch('/api/sync', { method: 'POST' });
+      const result = await response.json();
+
+      if (result.success) {
+        // 同步成功，重新獲取資料
+        await fetchData();
+        alert(`✅ 同步成功！\n共同步 ${result.totalProjects} 個專案\n耗時 ${(result.durationMs / 1000).toFixed(2)} 秒`);
+      } else {
+        alert(`❌ 同步失敗：${result.error || result.message}`);
+      }
+    } catch (error) {
+      console.error('Error syncing data:', error);
+      alert('❌ 同步失敗，請稍後再試');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -92,12 +111,12 @@ export default function Home() {
                 個人儀表板
               </button>
               <button
-                onClick={fetchData}
-                disabled={refreshing}
+                onClick={syncData}
+                disabled={syncing}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
               >
-                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                刷新資料
+                <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+                {syncing ? '同步中...' : '同步資料'}
               </button>
             </div>
           </div>

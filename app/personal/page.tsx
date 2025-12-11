@@ -34,7 +34,7 @@ export default function PersonalDashboard() {
   const [selectedPerson, setSelectedPerson] = useState<string>('');
   const [personalData, setPersonalData] = useState<PersonalData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -55,15 +55,35 @@ export default function PersonalDashboard() {
 
   const fetchPersonalData = async (person: string) => {
     try {
-      setRefreshing(true);
       const res = await fetch(`/api/personal/${encodeURIComponent(person)}`);
       const data = await res.json();
       setPersonalData(data);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching personal data:', error);
+    }
+  };
+
+  const syncData = async () => {
+    try {
+      setSyncing(true);
+      const response = await fetch('/api/sync', { method: 'POST' });
+      const result = await response.json();
+
+      if (result.success) {
+        // 同步成功，重新獲取資料
+        if (selectedPerson) {
+          await fetchPersonalData(selectedPerson);
+        }
+        alert(`✅ 同步成功！\n共同步 ${result.totalProjects} 個專案\n耗時 ${(result.durationMs / 1000).toFixed(2)} 秒`);
+      } else {
+        alert(`❌ 同步失敗：${result.error || result.message}`);
+      }
+    } catch (error) {
+      console.error('Error syncing data:', error);
+      alert('❌ 同步失敗，請稍後再試');
     } finally {
-      setRefreshing(false);
+      setSyncing(false);
     }
   };
 
@@ -112,12 +132,12 @@ export default function PersonalDashboard() {
             </div>
             {selectedPerson && (
               <button
-                onClick={() => fetchPersonalData(selectedPerson)}
-                disabled={refreshing}
+                onClick={syncData}
+                disabled={syncing}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
               >
-                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                刷新資料
+                <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+                {syncing ? '同步中...' : '同步資料'}
               </button>
             )}
           </div>
