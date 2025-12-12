@@ -11,7 +11,7 @@ export async function GET(
   const params = await context.params;
   try {
     const personName = decodeURIComponent(params.person);
-    const projects = await getAllProjects();
+    const projects = await getAllProjects(); // 已在 getAllProjects() 中過濾 state
     const now = new Date();
 
     // 過濾該人員相關的專案

@@ -22,26 +22,35 @@ interface Stats {
   editorWorkload: Record<string, { total: number; overdue: number; urgent: number }>;
 }
 
+interface AnnualStats extends Stats {
+  stateStats: Record<string, number>;
+}
+
 export default function Home() {
   const router = useRouter();
   const [projects, setProjects] = useState<any[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [annualStats, setAnnualStats] = useState<AnnualStats | null>(null);
+  const [showAnnual, setShowAnnual] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [syncing, setSyncing] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [projectsRes, statsRes] = await Promise.all([
+      const [projectsRes, statsRes, annualStatsRes] = await Promise.all([
         fetch('/api/projects'),
         fetch('/api/stats'),
+        fetch('/api/stats/annual'),
       ]);
 
       const projectsData = await projectsRes.json();
       const statsData = await statsRes.json();
+      const annualStatsData = await annualStatsRes.json();
 
       setProjects(projectsData);
       setStats(statsData);
+      setAnnualStats(annualStatsData);
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -100,9 +109,20 @@ export default function Home() {
               <h1 className="text-2xl font-bold text-gray-900">BWC 專案監控儀表板 - 全局視圖</h1>
               <p className="text-sm text-gray-600 mt-1">
                 最後更新：{lastUpdate.toLocaleString('zh-TW')}
+                {showAnnual && <span className="ml-2 text-purple-600 font-medium">(年度統計模式)</span>}
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowAnnual(!showAnnual)}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  showAnnual
+                    ? 'bg-purple-600 text-white hover:bg-purple-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {showAnnual ? '年度統計' : '當前統計'}
+              </button>
               <button
                 onClick={() => router.push('/personal')}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -124,33 +144,61 @@ export default function Home() {
       </header>
 
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 統計說明 */}
+        {showAnnual && annualStats && (
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+            <h3 className="text-sm font-semibold text-purple-900 mb-2">年度統計說明</h3>
+            <p className="text-sm text-purple-700">
+              年度統計包含所有專案（含已結案、已完成），用於查看全年度的完整數據。
+              {annualStats.stateStats && (
+                <span className="ml-2">
+                  狀態分布：
+                  {Object.entries(annualStats.stateStats).map(([state, count]) => (
+                    <span key={state} className="ml-2 font-medium">
+                      {state}: {count}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
         {/* 統計卡片 */}
-        {stats && (
+        {stats && annualStats && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatsCard
-                title="總專案數"
-                value={stats.total}
+                title={showAnnual ? "總專案數（含已結案）" : "總專案數"}
+                value={showAnnual ? annualStats.total : stats.total}
                 icon={FolderKanban}
-                color="blue"
+                color={showAnnual ? "purple" : "blue"}
               />
               <StatsCard
                 title="逾期專案"
-                value={stats.timeStats.overdue}
+                value={showAnnual ? annualStats.timeStats.overdue : stats.timeStats.overdue}
                 icon={AlertCircle}
                 color="red"
-                trend={stats.timeStats.overdue > 0 ? '需要立即處理' : ''}
+                trend={
+                  (showAnnual ? annualStats.timeStats.overdue : stats.timeStats.overdue) > 0
+                    ? '需要立即處理'
+                    : ''
+                }
               />
               <StatsCard
                 title="緊急專案 (3天內)"
-                value={stats.timeStats.urgent}
+                value={showAnnual ? annualStats.timeStats.urgent : stats.timeStats.urgent}
                 icon={Clock}
                 color="yellow"
-                trend={stats.timeStats.urgent > 0 ? '即將到期' : ''}
+                trend={
+                  (showAnnual ? annualStats.timeStats.urgent : stats.timeStats.urgent) > 0
+                    ? '即將到期'
+                    : ''
+                }
               />
               <StatsCard
                 title="正常專案"
-                value={stats.timeStats.onTime}
+                value={showAnnual ? annualStats.timeStats.onTime : stats.timeStats.onTime}
                 icon={CheckCircle2}
                 color="green"
               />
@@ -159,9 +207,9 @@ export default function Home() {
             {/* 圖表區域 */}
             <div className="mb-8">
               <Charts
-                statusStats={stats.statusStats}
-                typeStats={stats.typeStats}
-                timeStats={stats.timeStats}
+                statusStats={showAnnual ? annualStats.statusStats : stats.statusStats}
+                typeStats={showAnnual ? annualStats.typeStats : stats.typeStats}
+                timeStats={showAnnual ? annualStats.timeStats : stats.timeStats}
               />
             </div>
           </>

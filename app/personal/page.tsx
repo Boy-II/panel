@@ -157,11 +157,11 @@ export default function PersonalDashboard() {
                 id="person-select"
                 value={selectedPerson}
                 onChange={(e) => handlePersonChange(e.target.value)}
-                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               >
-                <option value="">-- 請選擇人員 --</option>
+                <option value="" className="text-gray-500">-- 請選擇人員 --</option>
                 {people.map((person) => (
-                  <option key={person.name} value={person.name}>
+                  <option key={person.name} value={person.name} className="text-gray-900">
                     {person.name} ({person.role})
                   </option>
                 ))}

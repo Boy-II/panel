@@ -65,8 +65,19 @@ export function dbRowToProject(row: any): ProjectProperty {
   };
 }
 
-// 獲取所有專案
+// 獲取所有專案（排除已結案和已完成）
 export async function getAllProjects(): Promise<ProjectProperty[]> {
+  const pool = getPool();
+  const result = await pool.query(`
+    SELECT * FROM projects
+    WHERE state NOT IN ('已結案', '已完成')
+    ORDER BY last_updated_at DESC
+  `);
+  return result.rows.map(dbRowToProject);
+}
+
+// 獲取所有專案（包含已結案和已完成，用於年度統計）
+export async function getAllProjectsIncludingClosed(): Promise<ProjectProperty[]> {
   const pool = getPool();
   const result = await pool.query('SELECT * FROM projects ORDER BY last_updated_at DESC');
   return result.rows.map(dbRowToProject);

@@ -6,7 +6,7 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const projects = await getAllProjects();
+    const projects = await getAllProjects(); // 已在 getAllProjects() 中過濾 state
 
     // 計算時間相關資訊
     const now = new Date();
