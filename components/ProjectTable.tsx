@@ -11,6 +11,8 @@ interface Project {
   責任設計: string[];
   通知狀態: string;
   工作執行區間: { start: string | null; end: string | null } | null;
+  進廠時間: string;
+  色稿時間: string;
   timeStatus: string;
   daysRemaining: number | null;
   最後更新時間: string;
@@ -170,7 +172,8 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">專案名稱</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">專案型態</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">時間狀態</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">工作區間</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">進廠時間</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">色稿時間</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">通知狀態</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">責任設計</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">責任編輯</th>
@@ -179,7 +182,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredProjects.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                   沒有找到符合條件的專案
                 </td>
               </tr>
@@ -202,13 +205,10 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
                     {getTimeStatusBadge(project.timeStatus, project.daysRemaining)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {project.工作執行區間 ? (
-                      <div>
-                        <div>{formatDate(project.工作執行區間.start)}</div>
-                        <div className="text-xs text-gray-400">至</div>
-                        <div>{formatDate(project.工作執行區間.end)}</div>
-                      </div>
-                    ) : '-'}
+                    {project.進廠時間 || '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    {project.色稿時間 || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs font-medium rounded ${

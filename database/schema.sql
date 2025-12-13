@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS projects (
     unit_name TEXT, -- 單元名稱
     size_specification TEXT, -- 尺寸規格
     production_time TEXT, -- 進廠時間
+    color_draft_time TEXT, -- 色稿時間
     file_path TEXT, -- 檔案路徑
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 最後更新時間
     synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- 同步時間

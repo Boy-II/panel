@@ -29,6 +29,7 @@ export interface ProjectProperty {
   單元名稱: string;
   尺寸規格: string;
   進廠時間: string;
+  色稿時間: string;
   檔案路徑: string;
   最後更新時間: string;
   id: string;
@@ -73,6 +74,7 @@ export function parseNotionPage(page: any): ProjectProperty {
     單元名稱: props['單元名稱']?.rich_text ? extractRichText(props['單元名稱'].rich_text) : '',
     尺寸規格: props['尺寸規格']?.rich_text ? extractRichText(props['尺寸規格'].rich_text) : '',
     進廠時間: props['進廠時間']?.rich_text ? extractRichText(props['進廠時間'].rich_text) : '',
+    色稿時間: props['色稿時間']?.rich_text ? extractRichText(props['色稿時間'].rich_text) : '',
     檔案路徑: props['檔案路徑']?.rich_text ? extractRichText(props['檔案路徑'].rich_text) : '',
     最後更新時間: props['最後更新時間']?.last_edited_time || '',
   };

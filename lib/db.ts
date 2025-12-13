@@ -37,6 +37,7 @@ export function projectToDbRow(project: ProjectProperty) {
     unit_name: project.單元名稱,
     size_specification: project.尺寸規格,
     production_time: project.進廠時間,
+    color_draft_time: project.色稿時間,
     file_path: project.檔案路徑,
     last_updated_at: project.最後更新時間 || new Date().toISOString(),
   };
@@ -60,6 +61,7 @@ export function dbRowToProject(row: any): ProjectProperty {
     單元名稱: row.unit_name || '',
     尺寸規格: row.size_specification || '',
     進廠時間: row.production_time || '',
+    色稿時間: row.color_draft_time || '',
     檔案路徑: row.file_path || '',
     最後更新時間: row.last_updated_at,
   };
@@ -100,9 +102,9 @@ export async function upsertProject(project: ProjectProperty): Promise<void> {
       id, project_name, project_types, editors, designers,
       notification_status, state, work_period_start, work_period_end,
       additional_notes, unit_name, size_specification,
-      production_time, file_path, last_updated_at, synced_at
+      production_time, color_draft_time, file_path, last_updated_at, synced_at
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP
     )
     ON CONFLICT (id) DO UPDATE SET
       project_name = EXCLUDED.project_name,
@@ -117,6 +119,7 @@ export async function upsertProject(project: ProjectProperty): Promise<void> {
       unit_name = EXCLUDED.unit_name,
       size_specification = EXCLUDED.size_specification,
       production_time = EXCLUDED.production_time,
+      color_draft_time = EXCLUDED.color_draft_time,
       file_path = EXCLUDED.file_path,
       last_updated_at = EXCLUDED.last_updated_at,
       synced_at = CURRENT_TIMESTAMP
@@ -124,7 +127,7 @@ export async function upsertProject(project: ProjectProperty): Promise<void> {
     row.id, row.project_name, row.project_types, row.editors, row.designers,
     row.notification_status, row.state, row.work_period_start, row.work_period_end,
     row.additional_notes, row.unit_name, row.size_specification,
-    row.production_time, row.file_path, row.last_updated_at
+    row.production_time, row.color_draft_time, row.file_path, row.last_updated_at
   ]);
 }
 
@@ -143,9 +146,9 @@ export async function bulkUpsertProjects(projects: ProjectProperty[]): Promise<v
           id, project_name, project_types, editors, designers,
           notification_status, state, work_period_start, work_period_end,
           additional_notes, unit_name, size_specification,
-          production_time, file_path, last_updated_at, synced_at
+          production_time, color_draft_time, file_path, last_updated_at, synced_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, CURRENT_TIMESTAMP
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP
         )
         ON CONFLICT (id) DO UPDATE SET
           project_name = EXCLUDED.project_name,
@@ -160,6 +163,7 @@ export async function bulkUpsertProjects(projects: ProjectProperty[]): Promise<v
           unit_name = EXCLUDED.unit_name,
           size_specification = EXCLUDED.size_specification,
           production_time = EXCLUDED.production_time,
+          color_draft_time = EXCLUDED.color_draft_time,
           file_path = EXCLUDED.file_path,
           last_updated_at = EXCLUDED.last_updated_at,
           synced_at = CURRENT_TIMESTAMP
@@ -167,7 +171,7 @@ export async function bulkUpsertProjects(projects: ProjectProperty[]): Promise<v
         row.id, row.project_name, row.project_types, row.editors, row.designers,
         row.notification_status, row.state, row.work_period_start, row.work_period_end,
         row.additional_notes, row.unit_name, row.size_specification,
-        row.production_time, row.file_path, row.last_updated_at
+        row.production_time, row.color_draft_time, row.file_path, row.last_updated_at
       ]);
     }
 
