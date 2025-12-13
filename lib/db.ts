@@ -73,6 +73,9 @@ export async function getAllProjects(): Promise<ProjectProperty[]> {
   const result = await pool.query(`
     SELECT * FROM projects
     WHERE state NOT IN ('已結案', '已完成')
+      AND production_time IS NOT NULL AND production_time != ''
+      AND project_name IS NOT NULL AND project_name != ''
+      AND editors IS NOT NULL AND array_length(editors, 1) > 0
     ORDER BY last_updated_at DESC
   `);
   return result.rows.map(dbRowToProject);
