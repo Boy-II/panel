@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
+import { Search, AlertCircle, Clock, CheckCircle2, X } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -28,6 +28,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [timeFilter, setTimeFilter] = useState<string>('all');
+  const [closingProjects, setClosingProjects] = useState<Set<string>>(new Set());
 
   // 獲取所有唯一的專案型態
   const projectTypes = useMemo(() => {
@@ -58,7 +59,41 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
     });
   }, [projects, searchTerm, statusFilter, typeFilter, timeFilter]);
 
-  const getTimeStatusBadge = (status: string, days: number | null) => {
+  // 處理結案
+  const handleCloseProject = async (projectId: string) => {
+    if (!confirm('確定要將此專案標記為已結案嗎？')) {
+      return;
+    }
+
+    setClosingProjects(prev => new Set(prev).add(projectId));
+
+    try {
+      const response = await fetch('/api/projects/close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ projectId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('結案失敗');
+      }
+
+      // 刷新頁面以更新資料
+      window.location.reload();
+    } catch (error) {
+      console.error('結案錯誤:', error);
+      alert('結案失敗，請稍後再試');
+      setClosingProjects(prev => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+    }
+  };
+
+  const getTimeStatusBadge = (status: string, days: number | null, projectId: string) => {
     if (status === 'expired') {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
@@ -68,11 +103,22 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
       );
     }
     if (status === 'overdue') {
+      const isClosing = closingProjects.has(projectId);
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-          <AlertCircle size={14} />
-          逾期 {days ? Math.abs(days) : 0} 天
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <AlertCircle size={14} />
+            逾期 {days ? Math.abs(days) : 0} 天
+          </span>
+          <button
+            onClick={() => handleCloseProject(projectId)}
+            disabled={isClosing}
+            className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed rounded-md transition-colors"
+          >
+            <X size={14} />
+            {isClosing ? '處理中...' : '是否結案'}
+          </button>
+        </div>
       );
     }
     if (status === 'urgent') {
@@ -209,7 +255,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {getTimeStatusBadge(project.timeStatus, project.daysRemaining)}
+                    {getTimeStatusBadge(project.timeStatus, project.daysRemaining, project.id)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {project.進廠時間 || '-'}
