@@ -6,6 +6,7 @@ import { Search, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 interface Project {
   id: string;
   專案名稱: string;
+  單元名稱: string;
   專案型態: string[];
   責任編輯: string[];
   責任設計: string[];
@@ -170,6 +171,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">專案名稱</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">單元名稱</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">專案型態</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">時間狀態</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">進廠時間</th>
@@ -182,7 +184,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredProjects.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
                   沒有找到符合條件的專案
                 </td>
               </tr>
@@ -191,6 +193,11 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
                 <tr key={project.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">{project.專案名稱}</div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    <div className="max-w-xs line-clamp-2" title={project.單元名稱}>
+                      {project.單元名稱 || '-'}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
