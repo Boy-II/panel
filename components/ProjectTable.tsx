@@ -29,6 +29,7 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [timeFilter, setTimeFilter] = useState<string>('all');
   const [closingProjects, setClosingProjects] = useState<Set<string>>(new Set());
+  const [closedProjects, setClosedProjects] = useState<Set<string>>(new Set());
 
   // 獲取所有唯一的專案型態
   const projectTypes = useMemo(() => {
@@ -80,8 +81,13 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
         throw new Error('結案失敗');
       }
 
-      // 刷新頁面以更新資料
-      window.location.reload();
+      // 標記為已結案（等待資料庫同步）
+      setClosingProjects(prev => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
+      setClosedProjects(prev => new Set(prev).add(projectId));
     } catch (error) {
       console.error('結案錯誤:', error);
       alert('結案失敗，請稍後再試');
@@ -104,6 +110,19 @@ export default function ProjectTable({ projects }: ProjectTableProps) {
     }
     if (status === 'overdue') {
       const isClosing = closingProjects.has(projectId);
+      const isClosed = closedProjects.has(projectId);
+
+      if (isClosed) {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <Clock size={14} className="animate-spin" />
+              等待同步資料
+            </span>
+          </div>
+        );
+      }
+
       return (
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
