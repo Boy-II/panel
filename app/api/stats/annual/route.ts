@@ -6,7 +6,15 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const projects = await getAllProjectsIncludingClosed(); // 包含已結案項目
+    const allProjects = await getAllProjectsIncludingClosed(); // 包含已結案項目
+
+    // 過濾空值項目（與 getAllProjects 一致的過濾邏輯）
+    const projects = allProjects.filter(project =>
+      project.進廠時間 && project.進廠時間 !== '' &&
+      project.專案名稱 && project.專案名稱 !== '' &&
+      project.責任編輯 && project.責任編輯.length > 0
+    );
+
     const now = new Date();
 
     // 狀態統計（包含所有項目）
@@ -42,28 +50,37 @@ export async function GET() {
     };
 
     projects.forEach(project => {
-      if (!project.工作執行區間?.end) {
+      if (!project.進廠時間) {
         timeStats.noDeadline++;
         return;
       }
 
-      const endDate = new Date(project.工作執行區間.end);
-      const diffTime = endDate.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays < 0) {
-        // 逾期超過365天標記為已過期
-        if (Math.abs(diffDays) > 365) {
-          timeStats.expired++;
-        } else {
-          timeStats.overdue++;
+      try {
+        const productionDate = new Date(project.進廠時間);
+        if (isNaN(productionDate.getTime())) {
+          timeStats.noDeadline++;
+          return;
         }
-      } else if (diffDays <= 3) {
-        timeStats.urgent++;
-      } else if (diffDays <= 7) {
-        timeStats.warning++;
-      } else {
-        timeStats.onTime++;
+
+        const diffTime = productionDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          // 逾期超過365天標記為已過期
+          if (Math.abs(diffDays) > 365) {
+            timeStats.expired++;
+          } else {
+            timeStats.overdue++;
+          }
+        } else if (diffDays <= 3) {
+          timeStats.urgent++;
+        } else if (diffDays <= 7) {
+          timeStats.warning++;
+        } else {
+          timeStats.onTime++;
+        }
+      } catch {
+        timeStats.noDeadline++;
       }
     });
 
@@ -82,14 +99,20 @@ export async function GET() {
           acc[designer].closed++;
         }
 
-        if (project.工作執行區間?.end) {
-          const endDate = new Date(project.工作執行區間.end);
-          const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (project.進廠時間) {
+          try {
+            const productionDate = new Date(project.進廠時間);
+            if (!isNaN(productionDate.getTime())) {
+              const diffDays = Math.ceil((productionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (diffDays < 0) {
-            acc[designer].overdue++;
-          } else if (diffDays <= 3) {
-            acc[designer].urgent++;
+              if (diffDays < 0) {
+                acc[designer].overdue++;
+              } else if (diffDays <= 3) {
+                acc[designer].urgent++;
+              }
+            }
+          } catch {
+            // 日期解析失敗，不計入逾期或緊急
           }
         }
       });
@@ -111,14 +134,20 @@ export async function GET() {
           acc[editor].closed++;
         }
 
-        if (project.工作執行區間?.end) {
-          const endDate = new Date(project.工作執行區間.end);
-          const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (project.進廠時間) {
+          try {
+            const productionDate = new Date(project.進廠時間);
+            if (!isNaN(productionDate.getTime())) {
+              const diffDays = Math.ceil((productionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (diffDays < 0) {
-            acc[editor].overdue++;
-          } else if (diffDays <= 3) {
-            acc[editor].urgent++;
+              if (diffDays < 0) {
+                acc[editor].overdue++;
+              } else if (diffDays <= 3) {
+                acc[editor].urgent++;
+              }
+            }
+          } catch {
+            // 日期解析失敗，不計入逾期或緊急
           }
         }
       });

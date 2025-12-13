@@ -6,16 +6,21 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    const projects = await getAllProjects(); // 已在 getAllProjects() 中過濾 state
+    const projects = await getAllProjects(); // 已在 getAllProjects() 中過濾 state 和空值
     const now = new Date();
 
-    // 過濾掉逾期超過365天的專案（不計入統計）
+    // 過濾掉逾期超過365天的專案（不計入統計，使用進廠時間判斷）
     const activeProjects = projects.filter(project => {
-      if (!project.工作執行區間?.end) return true;
-      const endDate = new Date(project.工作執行區間.end);
-      const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      // 排除逾期超過365天的專案
-      return !(diffDays < 0 && Math.abs(diffDays) > 365);
+      if (!project.進廠時間) return true;
+      try {
+        const productionDate = new Date(project.進廠時間);
+        if (isNaN(productionDate.getTime())) return true;
+        const diffDays = Math.ceil((productionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        // 排除逾期超過365天的專案
+        return !(diffDays < 0 && Math.abs(diffDays) > 365);
+      } catch {
+        return true;
+      }
     });
 
     // 通知狀態統計（僅計算活躍專案）
@@ -44,23 +49,32 @@ export async function GET() {
     };
 
     activeProjects.forEach(project => {
-      if (!project.工作執行區間?.end) {
+      if (!project.進廠時間) {
         timeStats.noDeadline++;
         return;
       }
 
-      const endDate = new Date(project.工作執行區間.end);
-      const diffTime = endDate.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      try {
+        const productionDate = new Date(project.進廠時間);
+        if (isNaN(productionDate.getTime())) {
+          timeStats.noDeadline++;
+          return;
+        }
 
-      if (diffDays < 0) {
-        timeStats.overdue++;
-      } else if (diffDays <= 3) {
-        timeStats.urgent++;
-      } else if (diffDays <= 7) {
-        timeStats.warning++;
-      } else {
-        timeStats.onTime++;
+        const diffTime = productionDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          timeStats.overdue++;
+        } else if (diffDays <= 3) {
+          timeStats.urgent++;
+        } else if (diffDays <= 7) {
+          timeStats.warning++;
+        } else {
+          timeStats.onTime++;
+        }
+      } catch {
+        timeStats.noDeadline++;
       }
     });
 
@@ -72,14 +86,20 @@ export async function GET() {
         }
         acc[designer].total++;
 
-        if (project.工作執行區間?.end) {
-          const endDate = new Date(project.工作執行區間.end);
-          const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (project.進廠時間) {
+          try {
+            const productionDate = new Date(project.進廠時間);
+            if (!isNaN(productionDate.getTime())) {
+              const diffDays = Math.ceil((productionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (diffDays < 0) {
-            acc[designer].overdue++;
-          } else if (diffDays <= 3) {
-            acc[designer].urgent++;
+              if (diffDays < 0) {
+                acc[designer].overdue++;
+              } else if (diffDays <= 3) {
+                acc[designer].urgent++;
+              }
+            }
+          } catch {
+            // 日期解析失敗，不計入逾期或緊急
           }
         }
       });
@@ -94,14 +114,20 @@ export async function GET() {
         }
         acc[editor].total++;
 
-        if (project.工作執行區間?.end) {
-          const endDate = new Date(project.工作執行區間.end);
-          const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (project.進廠時間) {
+          try {
+            const productionDate = new Date(project.進廠時間);
+            if (!isNaN(productionDate.getTime())) {
+              const diffDays = Math.ceil((productionDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (diffDays < 0) {
-            acc[editor].overdue++;
-          } else if (diffDays <= 3) {
-            acc[editor].urgent++;
+              if (diffDays < 0) {
+                acc[editor].overdue++;
+              } else if (diffDays <= 3) {
+                acc[editor].urgent++;
+              }
+            }
+          } catch {
+            // 日期解析失敗，不計入逾期或緊急
           }
         }
       });
